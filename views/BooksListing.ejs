@@ -1,7 +1,30 @@
 <% layout('layouts/boilerplate') %>
 <body>
+    <!-- Data exist in mongodb shwo here book Website -->
+
 
     <h1>All Books Listing</h1>
+    <a href="/new" class="btn btn-primary mb-3">Add New Book</a>
+    <div class="row">
+        <% books.forEach(book => { %>
+            <div class="col-md-4 mb-4">
+                <div class="card h-100">
+                    <img src="<%= book.image %>" class="card-img-top" alt="<%= book.title %>">
+                    <div class="card-body">
+                        <h5 class="card-title
+"><%= book.title %></h5>
+
+                        <p class="card-text">Author: <%= book.author %></p>
+                        <p class="card-text">Description: <%= book.description %></p>
+                        <p class="card-text">Price: $<%= book.price.toFixed(2) %></p>
+                    </div>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+    <div class="row">
+    </div>
+  
    
 
 </body>
