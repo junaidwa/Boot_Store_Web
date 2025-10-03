@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout</title>
+</head>
+<body>
+    <!-- Here we give order detials means delivery and payment details address here -->
+    <h1>Checkout Page</h1>
+    <p>Thank you for your purchase!</p>
+    <a href="/books">Back to Books</a>
+
+
+    <h2>Order Details</h2>
+
+<% if (cart.length > 0) { %>
+  <% cart.forEach(item => { %>
+    <p>Book Title: <%= item.title %></p>
+    <p>Author: <%= item.author %></p>
+    <p>Price: $<%= item.price %></p>
+    <hr>
+  <% }) %>
+<% } else { %>
+  <p>No items in cart</p>
+<% } %>
+
+    <form action="/complete-order" method="POST">
+        <div>
+            <label for="name">Full Name:</label>
+            <input type="text" id="name" name="name" required>
+        </div>
+        <div>
+            <label for="address">Address:</label>
+            <input type="text" id="address" name="address" required>
+        </div>
+        <div>
+            <label for="city">City:</label>
+            <input type="text" id="city" name="city" required>
+        </div>
+        <div>
+            <label for="postalCode">Postal Code:</label>
+            <input type="text" id="postalCode" name="postalCode" required>
+        </div>
+        <div>
+            <label for="country">Country:</label>
+            <input type="text" id="country" name="country" required>
+        </div>
+
+        <h2>Payment Information</h2>
+         Now only pay on delivery option available Soon online payment option will be available
+        <div>
+            <label for="paymentMethod">Payment Method:</label>
+            <select id="paymentMethod" name="paymentMethod" required>
+                <option value="cod">Cash on Delivery</option>
+                <!-- Future options can be added here -->
+            </select>
+
+        <button type="submit">Complete Order</button>
+
+    </form>
+</body>
+</html>
