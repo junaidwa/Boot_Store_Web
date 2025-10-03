@@ -4,6 +4,8 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
  const passportLocalMongoose = require('passport-local-mongoose');
  const flash = require("connect-flash");
+ require('dotenv').config();
+
 
 
  const session = require("express-session");
@@ -35,6 +37,7 @@ app.use(session({
 app.use(flash()); // Use flash for temporary messages
 
 app.use((req, res, next) => {
+  res.locals.currentUser = req.user || null;    // so templates can use currentUser
   res.locals.success = req.flash("success");
   res.locals.error = req.flash("error");
   next();
@@ -44,7 +47,8 @@ app.use((req, res, next) => {
 
 const userSchema = new Schema({
   username: { type: String, required: true, unique: true },
-  email: { type: String, required: true, unique: true }
+  email: { type: String, required: true, unique: true },
+    role: { type: String, enum: ['user','admin'], default: 'user' } // NEW
 });
 
 userSchema.plugin(passportLocalMongoose); // adds username, hash and salt fields
@@ -140,7 +144,15 @@ mongoose
 app.post("/register", async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
-    const user = new User({ username, email });
+
+    // Check .env lists
+    const adminEmails = (process.env.ADMIN_EMAILS || "").split(",").map(s => s.trim()).filter(Boolean);
+    const adminUsernames = (process.env.ADMIN_USERNAMES || "").split(",").map(s => s.trim()).filter(Boolean);
+
+    // decide role on server only
+    const role = (adminEmails.includes(email) || adminUsernames.includes(username)) ? "admin" : "user";
+
+    const user = new User({ username, email, role });
     const registeredUser = await User.register(user, password);
     req.login(registeredUser, (err) => {
       if (err) return next(err);
@@ -151,9 +163,9 @@ app.post("/register", async (req, res, next) => {
     console.log("Registration Error:", err);
     req.flash("error", err.message);
     res.redirect("/register");
-
   }
 });
+
 
 app.post("/login", passport.authenticate("local", {
   failureRedirect: "/login",
@@ -165,7 +177,17 @@ function isLoggedIn(req, res, next) {
   if (req.isAuthenticated()) {
     return next();
   }
+  
+  req.flash("error", "You must be logged in to perform this action.");
   res.redirect("/login");
+}
+
+function isAdmin(req, res, next) {
+  if (req.isAuthenticated() && req.user.role === "admin") {
+    return next();
+  }
+  req.flash("error", "You must be an admin to perform this action.");
+  res.redirect("/books");
 }
 
 
@@ -182,8 +204,14 @@ app.post("/books", async (req, res) => {
 
 
 
-app.get("/", (req, res) => {
-  res.render("BooksListing.ejs");
+app.get("/", async(req, res) => {
+   try {
+    const books = await Book.find(); // assuming you have a Book model
+    res.render("BooksListing", { books }); // pass books to ejs
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching books");
+  }
 });
 app.get("/books", async (req, res) => {
   try {
@@ -195,7 +223,7 @@ app.get("/books", async (req, res) => {
   }
 });
 
-app.get("/new", (req, res) => {
+app.get("/new",isAdmin, (req, res) => {
   res.render("new");
 });
 
@@ -207,7 +235,7 @@ app.get("/about", (req, res) => {
 });
 
 // Add to cart
-app.post("/cart", async (req, res) => {
+app.post("/cart",isLoggedIn,isAdmin, async (req, res) => {
   const { bookId } = req.body;
   const book = await Book.findById(bookId);
 
@@ -227,12 +255,12 @@ app.post("/cart", async (req, res) => {
 });
 
 // Show cart
-app.get("/cart", (req, res) => {
+app.get("/cart", isLoggedIn, (req, res) => {
   const cart = req.session.cart || [];
   res.render("cart", { cart });
 });
 
-app.get("/checkout", (req, res) => {
+app.get("/checkout", isLoggedIn, (req, res) => {
   const cart = req.session.cart || [];
   res.render("checkout", { cart });
 });
@@ -298,28 +326,6 @@ app.post("/complete-order", async (req, res) => {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// app.post("/cart", (req, res) => {
-//   res.render("cart");
-// });
-// app.get("/cart", (req, res) => {
-//   res.render("cart");
-// }
-// );
 app.get("/logout",isLoggedIn, (req, res) => {
   req.logout((err) => {
     if (err) {
@@ -330,7 +336,7 @@ app.get("/logout",isLoggedIn, (req, res) => {
   });
 });
 
-app.get("/books/:id/edit", isLoggedIn, async (req, res) => {
+app.get("/books/:id/edit", isLoggedIn,isAdmin, async (req, res) => {
   const { id } = req.params;
   const book
   = await Book
@@ -342,7 +348,7 @@ app.get("/books/:id/edit", isLoggedIn, async (req, res) => {
   res.render("edit", { book });
 });
 
-app.post("/books/:id", isLoggedIn, async (req, res) => {
+app.post("/books/:id", isLoggedIn,isAdmin, async (req, res) => {
   const { id } = req.params;
   const { title, author, description, price, image } = req.body;
   await Book.findByIdAndUpdate(id, { title, author, description, price, image });
@@ -351,7 +357,19 @@ app.post("/books/:id", isLoggedIn, async (req, res) => {
 } );
 
 
-app.delete("/books/:id", isLoggedIn, async (req, res) => {
+app.post("/cart/remove",isLoggedIn, (req, res) => {
+  const { bookId } = req.body;
+  if (!req.session.cart) {
+    return res.redirect("/cart");
+  }
+  req.session.cart = req.session.cart.filter(item => item._id.toString() !== bookId);
+    req.flash("success", "Book Removed from Cart Successfully");
+
+  res.redirect("/cart");
+});
+
+
+app.delete("/books/:id", isLoggedIn,isAdmin, async (req, res) => {
   const { id } = req.params;
   await Book.findByIdAndDelete(id);
   req.flash("success", "Book Deleted Successfully");
