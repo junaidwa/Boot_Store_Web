@@ -289,6 +289,26 @@ app.get("/books/category/:category", async (req, res) => {
     res.status(500).send("Error fetching books by category");
   }
 });
+//Details of books
+  //  <a href="/books/<%= book._id %>/details" class="btn btn-info btn-sm">Details</a>
+app.get("/books/:id/details", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const book
+  = await Book
+      .findById(id);
+    if (!book) {
+      req.flash("error", "Book not found");
+      return res.redirect("/books");
+    }
+    res.render("bookDetails", { book });
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Error fetching book details");
+    res.redirect("/books");
+  }
+});
+
 
 
 
