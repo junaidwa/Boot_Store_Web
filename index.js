@@ -23,6 +23,9 @@ const methodOverride = require("method-override");
 const ejsmate = require("ejs-mate");
 const { url } = require("inspector");
 
+// Import routes
+const booksRoutes = require('./routes/books');
+
 const app = express();
 const port = 3000;
 
@@ -83,48 +86,7 @@ passport.deserializeUser(User.deserializeUser());
 //   image: String,
 // });
 // const Book = mongoose.model("Book", bookSchema);
-const bookSchema = new Schema({
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  author: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: String,
-  price: {
-    type: Number,
-    required: true,
-    min: 0
-  },
-  image:{
-    url: String,
-    filename: String
-  },
-
-  // 👇 New field for category
-  category: {
-    type: String,
-    enum: [
-      "Fiction",
-      "Non-fiction",
-      "Science",
-      "History",
-      "Islamic",
-      "Kids",
-      "Comics",
-      "Biography",
-      "Education",
-      "Technology"
-    ],
-    required: true
-  }
-});
-
-const Book = mongoose.model("Book", bookSchema);
+// Book schema is now defined in routes/books.js
 
 
 const orderSchema = new Schema({
@@ -156,6 +118,9 @@ app.use((req, res, next) => {
   res.locals.error = req.flash("error");
   next();
 });
+
+// -------------------- Routes --------------------
+app.use('/books', booksRoutes);
 
 // -------------------- Auth Helpers --------------------
 function isLoggedIn(req, res, next) {
@@ -199,7 +164,7 @@ app.post("/register", async (req, res, next) => {
     });
   } catch (err) {
     console.log("Registration Error:", err);
-    req.flash("error", err.message);
+    req.flash("error", "Registration Error: " + err.message);
     res.redirect("/register");
   }
 });
@@ -208,17 +173,20 @@ app.post("/register", async (req, res, next) => {
 app.post(
   "/login",
   passport.authenticate("local", {
-    failureRedirect: "/login",
     failureFlash: true,
-    successRedirect: "/books",
-  })
+    failureRedirect: "/login",
+  }),
+  (req, res) => {
+    req.flash("success", "Welcome Back!");
+    res.redirect("/books");
+  }
 );
 
 // Logout
-app.get("/logout", isLoggedIn, (req, res, next) => {
+app.get("/logout", (req, res, next) => {
   req.logout((err) => {
     if (err) return next(err);
-    req.flash("success", "Logged out successfully");
+    req.flash("success", "Logged Out Successfully");
     res.redirect("/books");
   });
 });
