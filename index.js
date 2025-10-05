@@ -10,6 +10,8 @@ require("dotenv").config();
 //Multer
 const multer  = require('multer')
 const { storage } = require('./CloudConfig');
+const { cloudinary } = require("./CloudConfig");
+
 const upload = multer({ storage: storage });
 // If you want to store files locally instead of cloud, use this:
 // //
@@ -372,20 +374,111 @@ app.get("/books/:id/edit", isLoggedIn, isAdmin, async (req, res) => {
   res.render("edit", { book });
 });
 //Update route
-// app.post("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
+
+// app.put("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
 //   const { id } = req.params;
-//   const { title, author, description, price, image } = req.body;
-//   await Book.findByIdAndUpdate(id, { title, author, description, price, image });
+//   const { title, author, description, price, image, category } = req.body;
+//   await Book.findByIdAndUpdate(id, { title, author, description, price, image, category });
 //   req.flash("success", "Book Updated Successfully");
 //   res.redirect("/books");
 // });
-app.put("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
-  const { id } = req.params;
-  const { title, author, description, price, image, category } = req.body;
-  await Book.findByIdAndUpdate(id, { title, author, description, price, image, category });
-  req.flash("success", "Book Updated Successfully");
-  res.redirect("/books");
+
+// //Update route with edit image option
+// app.put("/books/:id", isLoggedIn, isAdmin, upload.single("image"), async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { title, author, description, price, category } = req.body;
+
+//     // Find the existing book in DB
+//     const book = await Book.findById(id);
+
+//     if (!book) {
+//       req.flash("error", "Book not found");
+//       return res.redirect("/books");
+//     }
+
+//     // Update basic text fields
+//     book.title = title;
+//     book.author = author;
+//     book.description = description;
+//     book.price = price;
+//     book.category = category;
+
+//     // If a new image is uploaded, replace the old one
+//     if (req.file) {
+//       // Delete the old image from Cloudinary (optional but recommended)
+//       if (book.image && book.image.filename) {
+//         await cloudinary.uploader.destroy(book.image.filename);
+//       }
+
+//       // Add the new image info
+//       book.image = {
+//         url: req.file.path,
+//         filename: req.file.filename,
+//       };
+//     }
+
+//     // Save updates
+//     await book.save();
+//     req.flash("success", "Book Updated Successfully");
+//     res.redirect("/books");
+//   } catch (err) {
+//     console.error("Book Update Error:", err);
+//     req.flash("error", "Error updating book: " + err.message);
+//     res.redirect(`/books/${req.params.id}/edit`);
+//   }
+// });
+app.put("/books/:id", isLoggedIn, isAdmin, upload.single("image"), async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { title, author, description, price, category } = req.body;
+
+    // find existing
+    const book = await Book.findById(id);
+    if (!book) {
+      req.flash("error", "Book not found");
+      return res.redirect("/books");
+    }
+
+    // Update fields (ensure price is Number)
+    if (title) book.title = title;
+    if (author) book.author = author;
+    if (description) book.description = description;
+    if (price !== undefined) book.price = Number(price);
+    // If category provided, update it; otherwise keep existing (prevents validation failure)
+    if (category) {
+      book.category = category;
+    }
+
+    // If a new image is uploaded: delete old from Cloudinary and set new image
+    if (req.file) {
+      if (book.image && book.image.filename) {
+        try {
+          await cloudinary.uploader.destroy(book.image.filename);
+        } catch (delErr) {
+          console.warn("Cloudinary delete warning:", delErr.message);
+        }
+      }
+      book.image = {
+        url: req.file.path,
+        filename: req.file.filename
+      };
+    }
+
+    await book.save();
+    req.flash("success", "Book Updated Successfully");
+    res.redirect("/books");
+  } catch (err) {
+    console.error("Book Update Error:", err);
+    req.flash("error", "Error updating book: " + err.message);
+    res.redirect(`/books/${req.params.id}/edit`);
+  }
 });
+
+
+
+
+
 
 
 app.delete("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
