@@ -62,14 +62,54 @@ passport.use(User.createStrategy());
 passport.serializeUser(User.serializeUser());
 passport.deserializeUser(User.deserializeUser());
 
+// const bookSchema = new Schema({
+//   title: String,
+//   author: String,
+//   description: String,
+//   price: Number,
+//   image: String,
+// });
+// const Book = mongoose.model("Book", bookSchema);
 const bookSchema = new Schema({
-  title: String,
-  author: String,
+  title: {
+    type: String,
+    required: true,
+    trim: true
+  },
+  author: {
+    type: String,
+    required: true,
+    trim: true
+  },
   description: String,
-  price: Number,
+  price: {
+    type: Number,
+    required: true,
+    min: 0
+  },
   image: String,
+
+  // 👇 New field for category
+  category: {
+    type: String,
+    enum: [
+      "Fiction",
+      "Non-fiction",
+      "Science",
+      "History",
+      "Islamic",
+      "Kids",
+      "Comics",
+      "Biography",
+      "Education",
+      "Technology"
+    ],
+    required: true
+  }
 });
+
 const Book = mongoose.model("Book", bookSchema);
+
 
 const orderSchema = new Schema({
   customerName: { type: String, required: true },
@@ -178,33 +218,81 @@ app.get("/secret", (req, res, next) => {
 });
 
 // Books
-app.get("/", async (req, res) => {
+app.get("/home", async (req, res) => {
   try {
     const books = await Book.find();
-    res.render("BooksListing", { books });
+    res.render("home.ejs");
   } catch (err) {
     console.error(err);
-    res.status(500).send("Error fetching books");
+    res.status(500).send("Error in Home Page");
   }
 });
 
+// 📚 Route to show all books
+// app.get("/books", async (req, res) => {
+//   try {
+//     const books = await Book.find();
+//     res.render("BooksListing", { books });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send("Error fetching books");
+//   }
+// });
+
+
+// // 🏷️ Route to show books by category
+// app.get("/books/category/:category", async (req, res) => {
+//   try {
+//     const category = req.params.category;
+//     const books = await Book.find({ category });
+
+//     res.render("BooksListing", { books, selectedCategory: category });
+//   } catch (err) {
+//     console.error(err);
+//     res.status(500).send("Error fetching books by category");
+//   }
+// });
+
+
+// 📚 All books
 app.get("/books", async (req, res) => {
   try {
     const books = await Book.find();
-    res.render("BooksListing", { books });
+    res.render("BooksListing", { books, selectedCategory: "All" }); // 👈 added selectedCategory
   } catch (err) {
     console.error(err);
     res.status(500).send("Error fetching books");
   }
 });
 
-app.post("/books", isLoggedIn, isAdmin, async (req, res) => {
-  const { title, author, description, price, image } = req.body;
-  const book = new Book({ title, author, description, price, image });
-  await book.save();
-  req.flash("success", "Book Added Successfully");
-  res.redirect("/books");
+// 🏷️ Category route
+app.get("/books/category/:category", async (req, res) => {
+  try {
+    const category = req.params.category;
+    const books = await Book.find({ category });
+    res.render("BooksListing", { books, selectedCategory: category });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send("Error fetching books by category");
+  }
 });
+
+
+
+app.post("/books", isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const { title, author, description, price, image, category } = req.body;
+    const book = new Book({ title, author, description, price, image, category });
+    await book.save();
+    req.flash("success", "Book Added Successfully");
+    res.redirect("/books");
+  } catch (err) {
+    console.error("Book Add Error:", err);
+    req.flash("error", "Error adding book: " + err.message);
+    res.redirect("/new");
+  }
+});
+
 
 app.get("/new", isAdmin, (req, res) => {
   res.render("new");
@@ -219,14 +307,22 @@ app.get("/books/:id/edit", isLoggedIn, isAdmin, async (req, res) => {
   }
   res.render("edit", { book });
 });
-
-app.post("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
+//Update route
+// app.post("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
+//   const { id } = req.params;
+//   const { title, author, description, price, image } = req.body;
+//   await Book.findByIdAndUpdate(id, { title, author, description, price, image });
+//   req.flash("success", "Book Updated Successfully");
+//   res.redirect("/books");
+// });
+app.put("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
   const { id } = req.params;
-  const { title, author, description, price, image } = req.body;
-  await Book.findByIdAndUpdate(id, { title, author, description, price, image });
+  const { title, author, description, price, image, category } = req.body;
+  await Book.findByIdAndUpdate(id, { title, author, description, price, image, category });
   req.flash("success", "Book Updated Successfully");
   res.redirect("/books");
 });
+
 
 app.delete("/books/:id", isLoggedIn, isAdmin, async (req, res) => {
   const { id } = req.params;
@@ -317,6 +413,24 @@ app.get("/contact", (req, res) => res.render("contact"));
 app.get("/about", (req, res) => res.render("about"));
 app.get("/login", (req, res) => res.render("user/login"));
 app.get("/register", (req, res) => res.render("user/signup"));
+//We want users data, books data and orders data to be visible on dashboard
+app.get("/dashboard", isLoggedIn, isAdmin, async (req, res) => {
+  try {
+    const users = await User.find();
+    const books = await Book.find();
+    const orders = await Order.find().populate("books.bookId");
+    res.render("dashboard", { users, books, orders });
+  } catch (err) {
+    console.error(err);
+    req.flash("error", "Unable to load dashboard data.");
+    res.redirect("/books");
+  }
+});
+
+// app.get("/dashboard", isLoggedIn, isAdmin, (req, res) => {
+//   res.render("dashboard");
+
+// });
 
 // -------------------- Error Handlers --------------------
 // 404 - Page not found
