@@ -55,7 +55,15 @@
         <% books.forEach(book => { %>
           <div class="col-md-4 mb-4">
             <div class="card h-100 shadow-sm">
-              <img src="<%= book.image %>" class="card-img-top" alt="<%= book.title %>" />
+
+              <!-- ✅ Display image correctly -->
+              <% if (book.image && book.image.url) { %>
+                <img src="<%= book.image.url %>" class="card-img-top" alt="<%= book.title %>" />
+              <% } else { %>
+                <!-- 🖼️ Fallback image if none uploaded -->
+                <img src="https://via.placeholder.com/300x400?text=No+Image" class="card-img-top" alt="No image available" />
+              <% } %>
+
               <div class="card-body">
                 <h5 class="card-title"><%= book.title %></h5>
                 <p class="card-text">Author: <%= book.author %></p>
@@ -63,16 +71,20 @@
                 <p class="card-text fw-bold">Price: $<%= book.price.toFixed(2) %></p>
                 <p class="text-muted">Category: <%= book.category %></p>
               </div>
+
               <div class="card-footer text-center">
                 <a href="/books/<%= book._id %>/edit" class="btn btn-warning btn-sm">Edit</a>
+
                 <form action="/books/<%= book._id %>?_method=DELETE" method="POST" style="display:inline;">
                   <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                 </form>
+
                 <form action="/cart" method="POST" style="display:inline;">
                   <input type="hidden" name="bookId" value="<%= book._id %>">
                   <button type="submit" class="btn btn-success btn-sm">Add to Cart</button>
                 </form>
               </div>
+
             </div>
           </div>
         <% }) %>

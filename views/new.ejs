@@ -1,7 +1,7 @@
 <% layout('layouts/boilerplate') %>
 <body>
     <h1>Adding new books</h1>
- <form action="/books" method="POST">
+ <form action="/books" method="POST" enctype="multipart/form-data">
   <div>
     <label for="title">Title:</label>
     <input type="text" id="title" name="title" required>
@@ -34,9 +34,10 @@
     <label for="price">Price:</label>
     <input type="number" id="price" name="price" step="0.01" required>
   </div>
+ 
   <div>
-    <label for="image">Image:</label>
-    <input type="text" id="image" name="image" required>
+    <label for="image">Upload Book Image:</label>
+    <input type="file" id="image" name="image" required>
   </div>
   <button type="submit">Add Book</button>
 </form>

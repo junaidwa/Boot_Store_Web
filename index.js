@@ -6,10 +6,20 @@ const passportLocalMongoose = require("passport-local-mongoose");
 const flash = require("connect-flash");
 require("dotenv").config();
 
+
+//Multer
+const multer  = require('multer')
+const { storage } = require('./CloudConfig');
+const upload = multer({ storage: storage });
+// If you want to store files locally instead of cloud, use this:
+// //
+// const upload = multer({ dest: 'uploads/' })
+
 const session = require("express-session");
 const passport = require("passport");
 const methodOverride = require("method-override");
 const ejsmate = require("ejs-mate");
+const { url } = require("inspector");
 
 const app = express();
 const port = 3000;
@@ -87,7 +97,10 @@ const bookSchema = new Schema({
     required: true,
     min: 0
   },
-  image: String,
+  image:{
+    url: String,
+    filename: String
+  },
 
   // 👇 New field for category
   category: {
@@ -279,10 +292,40 @@ app.get("/books/category/:category", async (req, res) => {
 
 
 
-app.post("/books", isLoggedIn, isAdmin, async (req, res) => {
+// app.post("/books", upload.single("image"), isLoggedIn, isAdmin, async (req, res) => {
+//   try {
+//     const { title, author, description, price, category } = req.body;
+//     const image = req.file.path; // Get the uploaded image path
+//     const book = new Book({ title, author, description, price, image, category });
+//     await book.save();
+//     req.flash("success", "Book Added Successfully");
+//     res.redirect("/books");
+//   } catch (err) {
+//     console.error("Book Add Error:", err);
+//     req.flash("error", "Error adding book: " + err.message);
+//     res.redirect("/new");
+//   }
+// });
+//For stroing online url to iamges
+app.post("/books", upload.single("image"), isLoggedIn, isAdmin, async (req, res) => {
   try {
-    const { title, author, description, price, image, category } = req.body;
-    const book = new Book({ title, author, description, price, image, category });
+    const { title, author, description, price, category } = req.body;
+
+    const book = new Book({
+      title,
+      author,
+      description,
+      price,
+      category,
+    });
+
+    if (req.file) {
+      book.image = {
+        url: req.file.path,      // Cloudinary URL
+        filename: req.file.filename,  // Cloudinary file name
+      };
+    }
+
     await book.save();
     req.flash("success", "Book Added Successfully");
     res.redirect("/books");
@@ -294,7 +337,8 @@ app.post("/books", isLoggedIn, isAdmin, async (req, res) => {
 });
 
 
-app.get("/new", isAdmin, (req, res) => {
+
+app.get("/new", isLoggedIn, isAdmin, (req, res) => {
   res.render("new");
 });
 
