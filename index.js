@@ -34,6 +34,7 @@ app.set("views", path.join(__dirname, "views"));
 // -------------------- Middleware --------------------
 app.use(express.urlencoded({ extended: true }));
 app.use(methodOverride("_method"));
+app.use(express.static(path.join(__dirname, "public")));
 
 // -------------------- Session & Passport Setup --------------------
 app.use(
@@ -566,6 +567,7 @@ app.post("/complete-order", async (req, res) => {
 });
 
 // Static pages
+app.get("/", (req, res) => res.render("home"));
 app.get("/contact", (req, res) => res.render("contact"));
 app.get("/about", (req, res) => res.render("about"));
 app.get("/login", (req, res) => res.render("user/login"));

@@ -1,97 +1,119 @@
 <% layout('layouts/boilerplate') %>
-<body class="container mt-4">
 
+<div class="container py-5">
   <div class="row">
-    <!-- 📚 Sidebar for Categories -->
-    <div class="col-md-3">
-      <h4>Categories</h4>
-      <ul class="list-group">
-
-        <!-- "All" button -->
-        <li class="list-group-item <%= selectedCategory === 'All' ? 'active' : '' %>">
-          <a href="/books" class="<%= selectedCategory === 'All' ? 'text-white' : '' %>">All</a>
-        </li>
-
-        <% const categories = [
-          "Fiction",
-          "Non-fiction",
-          "Science",
-          "History",
-          "Islamic",
-          "Kids",
-          "Comics",
-          "Biography",
-          "Education",
-          "Technology"
-        ]; %>
-
-        <% categories.forEach(cat => { %>
-          <li class="list-group-item <%= selectedCategory === cat ? 'active' : '' %>">
-            <a href="/books/category/<%= cat %>" class="<%= selectedCategory === cat ? 'text-white' : '' %>">
-              <%= cat %>
+    <!-- Sidebar for Categories -->
+    <div class="col-lg-3 mb-4">
+      <div class="card shadow-sm">
+        <div class="card-header bg-primary text-white">
+          <h3 class="h5 mb-0">Categories</h3>
+        </div>
+        <div class="card-body p-0">
+          <div class="list-group list-group-flush">
+            <!-- "All" button -->
+            <a href="/books" class="list-group-item list-group-item-action <%= selectedCategory === 'All' ? 'active' : '' %>">
+              All
             </a>
-          </li>
-        <% }) %>
-      </ul>
+
+            <% const categories = [
+              "Fiction",
+              "Non-fiction",
+              "Science",
+              "History",
+              "Islamic",
+              "Kids",
+              "Comics",
+              "Biography",
+              "Education",
+              "Technology"
+            ]; %>
+
+            <% categories.forEach(cat => { %>
+              <a href="/books/category/<%= cat %>" class="list-group-item list-group-item-action <%= selectedCategory === cat ? 'active' : '' %>">
+                <%= cat %>
+              </a>
+            <% }) %>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <!-- 📖 Book List Section -->
-    <div class="col-md-9">
-      <h1>
-        <% if (selectedCategory === 'All') { %>
-          All Books
-        <% } else { %>
-          <%= selectedCategory %> Books
-        <% } %>
-      </h1>
+    <!-- Book List Section -->
+    <div class="col-lg-9">
+      <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4">
+        <h1 class="h3 text-primary mb-3 mb-md-0">
+          <% if (selectedCategory === 'All') { %>
+            All Books
+          <% } else { %>
+            <%= selectedCategory %> Books
+          <% } %>
+        </h1>
 
-      <a href="/new" class="btn btn-primary mb-3">Add New Book</a>
+        <a href="/new" class="btn btn-primary">
+          <i class="fas fa-plus me-2"></i>Add New Book
+        </a>
+      </div>
 
-      <div class="row">
-        <% if (books.length === 0) { %>
-          <p>No books found in this category.</p>
-        <% } %>
+      <% if (books.length === 0) { %>
+        <div class="alert alert-info text-center">
+          <p class="mb-0">No books found in this category.</p>
+        </div>
+      <% } %>
 
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-lg-3 g-4">
         <% books.forEach(book => { %>
-          <div class="col-md-4 mb-4">
+          <div class="col">
             <div class="card h-100 shadow-sm">
-
-              <!-- ✅ Display image correctly -->
-              <% if (book.image && book.image.url) { %>
-                <img src="<%= book.image.url %>" class="card-img-top" alt="<%= book.title %>" />
-              <% } else { %>
-                <!-- 🖼️ Fallback image if none uploaded -->
-                <img src="https://via.placeholder.com/300x400?text=No+Image" class="card-img-top" alt="No image available" />
-              <% } %>
-
+              <div class="position-relative overflow-hidden" style="height: 250px;">
+                <!-- Display image -->
+                <% if (book.image && book.image.url) { %>
+                  <img src="<%= book.image.url %>" class="card-img-top h-100 object-fit-cover" alt="<%= book.title %>" />
+                <% } else { %>
+                  <!-- Fallback image -->
+                  <img src="https://via.placeholder.com/300x400?text=No+Image" class="card-img-top h-100 object-fit-cover" alt="No image available" />
+                <% } %>
+                
+                <!-- Hover overlay -->
+                <div class="position-absolute top-0 start-0 w-100 h-100 d-flex align-items-end justify-content-center pb-3" 
+                     style="background: linear-gradient(to top, rgba(0,0,0,0.7), transparent); opacity: 0; transition: opacity 0.3s;"
+                     onmouseover="this.style.opacity=1" 
+                     onmouseout="this.style.opacity=0">
+                  <a href="/books/<%= book._id %>/details" class="btn btn-primary btn-sm">View Details</a>
+                </div>
+              </div>
+              
               <div class="card-body">
-                <h5 class="card-title"><%= book.title %></h5>
-                <p class="card-text">Author: <%= book.author %></p>
-                <p class="card-text"><%= book.description %></p>
-                <p class="card-text fw-bold">Price: $<%= book.price.toFixed(2) %></p>
-                <p class="text-muted">Category: <%= book.category %></p>
+                <h3 class="card-title h5 text-truncate"><%= book.title %></h3>
+                <p class="text-muted mb-2">by <%= book.author %></p>
+                <p class="card-text small mb-2" style="display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;"><%= book.description %></p>
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                  <span class="fw-bold text-primary">$<%= book.price.toFixed(2) %></span>
+                  <span class="badge bg-light text-dark"><%= book.category %></span>
+                </div>
+                
+                <div class="d-flex flex-wrap gap-2 mt-3">
+                  <a href="/books/<%= book._id %>/edit" class="btn btn-warning btn-sm">
+                    <i class="fas fa-edit me-1"></i>Edit
+                  </a>
+                  
+                  <form action="/books/<%= book._id %>?_method=DELETE" method="POST" class="d-inline">
+                    <button type="submit" class="btn btn-danger btn-sm">
+                      <i class="fas fa-trash-alt me-1"></i>Delete
+                    </button>
+                  </form>
+                  
+                  <form action="/cart" method="POST" class="d-inline">
+                    <input type="hidden" name="bookId" value="<%= book._id %>">
+                    <button type="submit" class="btn btn-success btn-sm">
+                      <i class="fas fa-shopping-cart me-1"></i>Add to Cart
+                    </button>
+                  </form>
+                </div>
               </div>
-
-              <div class="card-footer text-center">
-                <a href="/books/<%= book._id %>/edit" class="btn btn-warning btn-sm">Edit</a>
-
-                <form action="/books/<%= book._id %>?_method=DELETE" method="POST" style="display:inline;">
-                  <button type="submit" class="btn btn-danger btn-sm">Delete</button>
-                </form>
-                <!-- //Details of books -->
-                <a href="/books/<%= book._id %>/details" class="btn btn-info btn-sm">Details</a>
-
-                <form action="/cart" method="POST" style="display:inline;">
-                  <input type="hidden" name="bookId" value="<%= book._id %>">
-                  <button type="submit" class="btn btn-success btn-sm">Add to Cart</button>
-                </form>
-              </div>
-
             </div>
           </div>
         <% }) %>
       </div>
     </div>
   </div>
-
-</body>
+</div>

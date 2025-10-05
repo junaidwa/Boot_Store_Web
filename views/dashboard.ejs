@@ -1,99 +1,173 @@
 <% layout('layouts/boilerplate') %>
 
-<div class="container mt-5">
-  <h1 class="mb-4">Admin Dashboard</h1>
-  <p class="lead">Here you can manage your Book Store data.</p>
+<div class="bg-light min-vh-100">
+  <div class="container py-4">
+    <h1 class="display-5 fw-bold text-primary mb-4">Admin Dashboard</h1>
+    
+    <!-- Dashboard Stats -->
+    <div class="row mb-4">
+      <div class="col-md-4 mb-3">
+        <div class="card border-start border-primary border-4">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="fas fa-users text-primary fs-3"></i>
+              </div>
+              <div>
+                <p class="text-uppercase text-muted small mb-1">Total Users</p>
+                <h3 class="fw-bold mb-0"><%= users.length %></h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <div class="card border-start border-danger border-4">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="bg-danger bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="fas fa-book text-danger fs-3"></i>
+              </div>
+              <div>
+                <p class="text-uppercase text-muted small mb-1">Total Books</p>
+                <h3 class="fw-bold mb-0"><%= books.length %></h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-md-4 mb-3">
+        <div class="card border-start border-primary border-4">
+          <div class="card-body">
+            <div class="d-flex align-items-center">
+              <div class="bg-primary bg-opacity-10 p-3 rounded-circle me-3">
+                <i class="fas fa-shopping-cart text-primary fs-3"></i>
+              </div>
+              <div>
+                <p class="text-uppercase text-muted small mb-1">Total Orders</p>
+                <h3 class="fw-bold mb-0"><%= orders.length %></h3>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
-  <!-- Users Section -->
-  <h2 class="mt-5">Users</h2>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Username</th>
-        <th>Email</th>
-        <th>Role</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% users.forEach(user => { %>
-        <tr>
-          <td><%= user._id %></td>
-          <td><%= user.username %></td>
-          <td><%= user.email %></td>
-          <td><%= user.role %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-
-  <!-- Books Section -->
-  <h2 class="mt-5">Books</h2>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>ID</th>
-        <th>Title</th>
-        <th>Author</th>
-        <th>Price</th>
-        <th>Description</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% books.forEach(book => { %>
-        <tr>
-          <td><%= book._id %></td>
-          <td><%= book.title %></td>
-          <td><%= book.author %></td>
-          <td>$<%= book.price %></td>
-          <td><%= book.description %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
-
-  <!-- Orders Section -->
-  <h2 class="mt-5">Orders</h2>
-  <table class="table table-bordered table-striped">
-    <thead>
-      <tr>
-        <th>Order ID</th>
-        <th>Customer Name</th>
-        <th>Address</th>
-        <th>Payment Method</th>
-        <th>Total Amount</th>
-        <th>Books</th>
-        <th>Status</th>
-        <th>Order Date</th>
-      </tr>
-    </thead>
-    <tbody>
-      <% orders.forEach(order => { %>
-        <tr>
-          <td><%= order._id %></td>
-          <td><%= order.customerName %></td>
-          <td>
-            <%= order.address %>, 
-            <%= order.city %>, 
-            <%= order.postalCode %>, 
-            <%= order.country %>
-          </td>
-          <td><%= order.paymentMethod %></td>
-          <td>$<%= order.totalAmount %></td>
-          <td>
-            <ul>
-              <% order.books.forEach(b => { %>
-                <li>
-                  <%= b.title %> by <%= b.author %> 
-                  (x<%= b.quantity %>) - $<%= b.price %>
-                </li>
+    <!-- Users Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-primary text-white">
+        <h2 class="h5 mb-0">Users</h2>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Username</th>
+                <th>Email</th>
+                <th>Role</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% users.forEach(user => { %>
+                <tr>
+                  <td class="text-muted"><%= user._id %></td>
+                  <td class="fw-medium"><%= user.username %></td>
+                  <td class="text-muted"><%= user.email %></td>
+                  <td>
+                    <span class="badge <%= user.role === 'admin' ? 'bg-primary' : 'bg-success' %> rounded-pill">
+                      <%= user.role %>
+                    </span>
+                  </td>
+                </tr>
               <% }) %>
-            </ul>
-          </td>
-          <td><%= order.status %></td>
-          <td><%= order.orderDate.toDateString() %></td>
-        </tr>
-      <% }) %>
-    </tbody>
-  </table>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Books Section -->
+    <div class="card mb-4">
+      <div class="card-header bg-danger text-white">
+        <h2 class="h5 mb-0">Books</h2>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>ID</th>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Price</th>
+                <th>Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% books.forEach(book => { %>
+                <tr>
+                  <td class="text-muted"><%= book._id %></td>
+                  <td class="fw-medium"><%= book.title %></td>
+                  <td class="text-muted"><%= book.author %></td>
+                  <td class="fw-bold text-primary">$<%= book.price %></td>
+                  <td class="text-truncate" style="max-width: 200px;"><%= book.description %></td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Orders Section -->
+    <div class="card">
+      <div class="card-header bg-primary text-white">
+        <h2 class="h5 mb-0">Orders</h2>
+      </div>
+      <div class="card-body p-0">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0">
+            <thead class="table-light">
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Address</th>
+                <th>Payment</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% orders.forEach(order => { %>
+                <tr>
+                  <td class="text-muted"><%= order._id %></td>
+                  <td class="fw-medium"><%= order.customerName %></td>
+                  <td class="text-muted">
+                    <%= order.address %>, <%= order.city %>
+                  </td>
+                  <td class="text-muted"><%= order.paymentMethod %></td>
+                  <td class="fw-bold text-primary">$<%= order.totalAmount %></td>
+                  <td>
+                    <span class="badge <%= order.status === 'Delivered' ? 'bg-success' : 
+                       order.status === 'Processing' ? 'bg-warning' : 
+                       'bg-info' %> rounded-pill">
+                      <%= order.status %>
+                    </span>
+                  </td>
+                  <td class="text-muted">
+                    <%= new Date(order.orderDate).toLocaleDateString() %>
+                  </td>
+                </tr>
+              <% }) %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
